@@ -14,9 +14,11 @@ void toLowerCase(std::string& str) {
 
 std::string cleanWord(const std::string& word) {
     std::string clean_word;
-    std::copy_if(word.begin(), word.end(), std::back_inserter(clean_word), [](char c) {
-        return std::isalnum(c) || c == '-' || c == '_';
-    });
+    for (char c : word) {
+        if (!std::ispunct(c) || c == '.' || c == '/' || c == ':') {
+            clean_word += c;
+        }
+    }
     return clean_word;
 }
 
@@ -25,17 +27,19 @@ bool isURL(const std::string &word) {
     return std::regex_search(word, url_regex);
 }
 
-void countWords(const std::string& text, std::map<std::string, int>& wordCount, std::map<std::string, std::set<int>>& wordLines,  std::map<std::string, int>& urlCount, std::map<std::string, std::set<int>> urls) {
-    std::istringstream iss(text);
+void countWords(std::map<std::string, int>& wordCount, std::map<std::string, std::set<int>>& wordLines,  std::map<std::string, int>& urlCount, std::map<std::string, std::set<int>> urls) {
+    std::ifstream in("Untitled.txt");
+    std::string line;
+    int line_number = 0;
+    while (std::getline(in, line)) {
+    std::istringstream iss(line);
     std::string word;
-    int line_number = 1;
+    line_number++;
 
     while (iss >> word) {
-        if (word == "\n") {
-            line_number++;
-        }
         word = cleanWord(word);
-        if (!word.empty()) {
+        if (!word.empty())
+        {
             if(isURL(word))
             {
                 urlCount[word]++;
@@ -45,6 +49,7 @@ void countWords(const std::string& text, std::map<std::string, int>& wordCount, 
             wordCount[word]++;
             wordLines[word].insert(line_number);
         }
+    }
     }
 }
 
@@ -60,24 +65,24 @@ void findURLs(const std::string& text, std::set<std::string>& urls) {
 }
 
 int main() {
-    std::ifstream inputFile("Untitled.txt");
+    std::ifstream in("Untitled.txt");
     std::ofstream outputWordCount("word_count.txt");
     std::ofstream outputWordLocations("word_locations.txt");
     std::ofstream outputURLs("urls.txt");
 
-    if (!inputFile.is_open()) {
+    if (!in.is_open()) {
         std::cerr << "Error opening input file." << std::endl;
         return 1;
     }
 
-    std::string text((std::istreambuf_iterator<char>(inputFile)), std::istreambuf_iterator<char>());
+    //std::string text((std::istreambuf_iterator<char>(inputFile)), std::istreambuf_iterator<char>());
 
     std::map<std::string, int> wordCount;
     std::map<std::string, std::set<int>> wordLines;
     std::map<std::string, int> urlCount;
     std::map<std::string, std::set<int>> urls;
 
-    countWords(text, wordCount, wordLines, urlCount, urls);
+    countWords(wordCount, wordLines, urlCount, urls);
     //findURLs(text, urls);
 
     for (const auto& [word, count] : wordCount) {
@@ -97,10 +102,10 @@ int main() {
     }
 
     for (const auto &entry : urlCount) {
-        outputURLs << entry.urls << "\n";
+        outputURLs << entry.first << "\n";
     }
 
-    inputFile.close();
+    in.close();
     outputWordCount.close();
     outputWordLocations.close();
     outputURLs.close();
