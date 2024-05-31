@@ -28,7 +28,7 @@ bool isURL(const std::string &word) {
 }
 
 void countWords(std::map<std::string, int>& wordCount, std::map<std::string, std::set<int>>& wordLines,  std::map<std::string, int>& urlCount, std::map<std::string, std::set<int>> urls) {
-    std::ifstream in("Untitled.txt");
+    std::ifstream in("text.txt");
     std::string line;
     int line_number = 0;
     while (std::getline(in, line)) {
