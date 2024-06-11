@@ -15,9 +15,12 @@ void toLowerCase(std::string& str) {
 std::string cleanWord(const std::string& word) {
     std::string clean_word;
     for (char c : word) {
-        if (!std::ispunct(c) || c == '.' || c == '/' || c == ':') {
+        if (std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_') {
+            clean_word += c;
+        } else if (!std::ispunct(static_cast<unsigned char>(c)) || c == '.' || c == '/' || c == ':') {
             clean_word += c;
         }
+
     }
     return clean_word;
 }
@@ -27,7 +30,7 @@ bool isURL(const std::string &word) {
     return std::regex_search(word, url_regex);
 }
 
-void countWords(std::map<std::string, int>& wordCount, std::map<std::string, std::set<int>>& wordLines,  std::map<std::string, int>& urlCount, std::map<std::string, std::set<int>> urls) {
+void countWords(std::map<std::string, std::pair< int, std::set<int> >> &wordCount, std::map<std::string, std::pair< int, std::set<int> >> &urlCount) {
     std::ifstream in("text.txt");
     std::string line;
     int line_number = 0;
@@ -42,12 +45,12 @@ void countWords(std::map<std::string, int>& wordCount, std::map<std::string, std
         {
             if(isURL(word))
             {
-                urlCount[word]++;
-                urls[word].insert(line_number);
+                urlCount[word].first++;
+                urlCount[word].second.insert(line_number);
             }
             toLowerCase(word);
-            wordCount[word]++;
-            wordLines[word].insert(line_number);
+            wordCount[word].first++;
+            wordCount[word].second.insert(line_number);
         }
     }
     }
@@ -65,50 +68,45 @@ void findURLs(const std::string& text, std::set<std::string>& urls) {
 }
 
 int main() {
-    std::ifstream in("Untitled.txt");
-    std::ofstream outputWordCount("word_count.txt");
-    std::ofstream outputWordLocations("word_locations.txt");
-    std::ofstream outputURLs("urls.txt");
+    std::ifstream in("text.txt");
+    std::ofstream outW("word.txt");
+    std::ofstream outU("url.txt");
 
     if (!in.is_open()) {
         std::cerr << "Error opening input file." << std::endl;
         return 1;
     }
 
-    //std::string text((std::istreambuf_iterator<char>(inputFile)), std::istreambuf_iterator<char>());
+    std::map<std::string, std::pair< int, std::set<int> >> wordCount;
+    //std::map<std::string, std::set<int>> wordLines;
+    std::map<std::string, std::pair< int, std::set<int> >> urlCount;
+    //std::map<std::string, std::set<int>> urls;
 
-    std::map<std::string, int> wordCount;
-    std::map<std::string, std::set<int>> wordLines;
-    std::map<std::string, int> urlCount;
-    std::map<std::string, std::set<int>> urls;
+    countWords(wordCount, urlCount);
 
-    countWords(wordCount, wordLines, urlCount, urls);
-    //findURLs(text, urls);
-
-    for (const auto& [word, count] : wordCount) {
-        if (count > 1) {
-            outputWordCount << word << ": " << count << "\n";
-        }
-    }
-
-    for (const auto& [word, lines] : wordLines) {
-        if (lines.size() > 1) {
-            outputWordLocations << word << ": ";
-            for (int line : lines) {
-                outputWordLocations << line << " ";
+    outW << "Words:" << std::endl;
+    for (auto& count : wordCount) {
+        if (count.second.first > 1)
+        {
+            outW << count.first << ": " << count.second.first << " Lines: ";
+            for (int line : count.second.second) {
+                outW << line << " ";
             }
-            outputWordLocations << "\n";
+            outW << "\n";
         }
     }
-
-    for (const auto &entry : urlCount) {
-        outputURLs << entry.first << "\n";
+    outU << "Urls:" << std::endl;
+    for (auto count : urlCount) {
+        outU << count.first << ": " << count.second.first << " Lines: ";
+        for (int line : count.second.second) {
+            outU << line << " ";
+        }
+        outU << "\n";
     }
 
     in.close();
-    outputWordCount.close();
-    outputWordLocations.close();
-    outputURLs.close();
+    outW.close();
+    outU.close();
 
     return 0;
 }
